@@ -1,0 +1,1035 @@
+/* =============================================================
+   ParkFinder - Stylesheet
+   -------------------------------------------------------------
+   1. Colours and sizes (CSS variables)
+   2. Base styles
+   3. Reusable pieces (container, panel, buttons, badges)
+   4. Navigation bar
+   5. Hero and search
+   6. Statistics
+   7. Dashboard layout (CSS Grid)
+   8. Demo bar and filters
+   9. Parking list and cards
+  10. Map, markers and popups
+  11. Selected parking panel
+  12. Footer and toast message
+  13. Responsive design (media queries)
+   ============================================================= */
+
+
+/* =============================================================
+   1. COLOURS AND SIZES
+   Change a value here and it changes everywhere var(--name) is used.
+   ============================================================= */
+:root {
+  --navy:       #0b1f3a;  /* primary colour */
+  --navy-light: #e9eef5;
+  --teal:       #0d9b8e;  /* accent colour */
+  --teal-dark:  #0a7c72;  /* darker teal for white text on buttons (better contrast) */
+  --teal-light: #e7f5f3;
+
+  --green:       #16a34a; /* Available    */
+  --green-bg:    #e6f6ec;
+  --orange:      #f59e0b; /* Filling fast */
+  --orange-bg:   #fdf2dc;
+  --orange-text: #92400e; /* dark orange text, readable on light backgrounds */
+  --red:         #dc2626; /* Full         */
+  --red-bg:      #fdeaea;
+  --blue:        #2563eb; /* user's location on the map */
+
+  --bg:      #f3f5f8;     /* page background */
+  --white:   #ffffff;
+  --text:    #1c2735;
+  --muted:   #546070;     /* secondary text (passes contrast on white) */
+  --border:  #d6dce4;
+
+  --radius:  6px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --nav-height: 56px;
+}
+
+
+/* =============================================================
+   2. BASE STYLES
+   ============================================================= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box; /* width includes padding and border */
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* when a nav link jumps to a section, leave room for the sticky navbar */
+  scroll-padding-top: calc(var(--nav-height) + 12px);
+}
+
+body {
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+}
+
+img { display: block; }
+ul  { list-style: none; }
+a   { color: inherit; }
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* The HTML "hidden" attribute must always hide the element */
+[hidden] { display: none !important; }
+
+/* Visible outline for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--teal-dark);
+  outline-offset: 2px;
+}
+
+/* Hides text on screen but keeps it for screen readers */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+
+/* =============================================================
+   3. REUSABLE PIECES
+   ============================================================= */
+
+/* Centres the content; never wider than 1280px, 16px gap at the sides */
+.container {
+  width: min(100% - 32px, 1280px);
+  margin-inline: auto;
+}
+
+/* White box with a thin border - used for every dashboard section */
+.panel {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.panel-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-primary        { background: var(--navy); color: var(--white); }
+.btn-primary:hover  { background: #17345d; }
+.btn-accent         { background: var(--teal-dark); color: var(--white); }
+.btn-accent:hover   { background: #08665e; }
+.btn-outline        { background: var(--white); border-color: var(--border); color: var(--text); }
+.btn-outline:hover  { border-color: var(--teal); color: var(--teal-dark); }
+.btn-sm             { padding: 5px 10px; font-size: 0.82rem; }
+.btn:disabled       { opacity: 0.65; cursor: wait; }
+
+/* A button that looks like a text link */
+.link-btn {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  color: var(--teal-dark);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Status badges: text + colour (never colour alone) */
+.badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-available { background: var(--green-bg);  color: #15803d; }
+.badge-limited   { background: var(--orange-bg); color: var(--orange-text); }
+.badge-full      { background: var(--red-bg);    color: #b91c1c; }
+
+/* Small coloured dots (filters and map legend) */
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-available { background: var(--green); }
+.dot-limited   { background: var(--orange); }
+.dot-full      { background: var(--red); }
+.dot-user      { background: var(--blue); }
+.dot-demo      { background: #6b7280; }
+
+
+/* =============================================================
+   4. NAVIGATION BAR
+   position: sticky keeps it at the top while scrolling.
+   ============================================================= */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 2000; /* above the Leaflet map */
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+}
+
+.navbar-inner {
+  min-height: var(--nav-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;   /* lets the mobile menu drop onto its own line */
+  gap: 16px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.logo-text {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.logo-accent { color: var(--teal-dark); }
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 4px;
+}
+
+.nav-link {
+  display: block;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  color: var(--navy);
+  background: var(--navy-light);
+}
+
+/* The link of the section currently on screen (set by script.js) */
+.nav-link.active {
+  color: var(--navy);
+  font-weight: 600;
+  background: var(--navy-light);
+}
+
+/* "Menu" button: only shown on small screens */
+.nav-toggle {
+  display: none;
+  padding: 6px 12px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+}
+
+
+/* =============================================================
+   5. HERO AND SEARCH
+   ============================================================= */
+.hero {
+  background: var(--navy);
+  color: var(--white);
+  padding: 28px 0;
+}
+
+.hero-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 6px;
+}
+
+.hero-text {
+  max-width: 640px;
+  color: #d3dcea;
+  margin-bottom: 16px;
+}
+
+.search-bar {
+  display: flex;
+  gap: 8px;
+  max-width: 600px;
+}
+
+.search-input {
+  flex: 1;         /* take the remaining width */
+  min-width: 0;    /* allow it to shrink on small screens */
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: var(--white);
+  color: var(--text);
+}
+
+.search-input:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 1px;
+}
+
+
+/* =============================================================
+   6. STATISTICS
+   Four equal columns with CSS Grid.
+   ============================================================= */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.stat {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.3;
+}
+
+.stat-value.stat-available { color: #15803d; }
+.stat-value.stat-occupied  { color: #b91c1c; }
+
+.stat-unit {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.stat-note {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+
+/* =============================================================
+   7. DASHBOARD LAYOUT
+   Desktop:   | list | map | details |   (all 600px tall)
+   The list and the details scroll inside their own box, so
+   no column stretches the others.
+   ============================================================= */
+.dashboard {
+  margin-top: 20px;
+  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr) 300px;
+  grid-template-rows: 600px;
+  gap: 16px;
+}
+
+
+/* =============================================================
+   8. DEMO BAR AND FILTERS
+   ============================================================= */
+.demo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 10px 14px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--teal);
+  border-radius: var(--radius);
+  font-size: 0.88rem;
+}
+
+.demo-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.demo-bar-time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums; /* digits keep the same width */
+}
+
+/* Paused: grey left border */
+.demo-bar.is-paused {
+  border-left-color: var(--muted);
+}
+
+/* The filter controls sit side by side and wrap onto new rows when
+   there is not enough space (auto-fit + minmax). */
+.filter-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px 24px;
+  align-items: start;
+}
+
+.filter-group {
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.filter-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.filter-label output {
+  color: var(--navy);
+}
+
+.check-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* accent-color recolours the browser's own checkboxes and slider */
+.check input,
+input[type="range"] {
+  accent-color: var(--teal-dark);
+}
+
+.check input {
+  width: 16px;
+  height: 16px;
+}
+
+input[type="range"] {
+  width: 100%;
+  cursor: pointer;
+}
+
+/* Vehicle type: radio buttons that look like a row of buttons.
+   The real radio is hidden; the <span> after it is styled. */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  width: max-content;
+}
+
+.segmented input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmented span {
+  display: block;
+  padding: 5px 14px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+}
+
+.segmented label:last-child span { border-right: none; }
+
+/* ":checked + span" = the span right after the checked radio */
+.segmented input:checked + span {
+  background: var(--navy);
+  color: var(--white);
+}
+
+.segmented input:focus-visible + span {
+  outline: 2px solid var(--teal-dark);
+  outline-offset: -2px;
+}
+
+.select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--white);
+}
+
+
+/* =============================================================
+   9. PARKING LIST AND CARDS
+   ============================================================= */
+.listing {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;   /* lets the list inside scroll instead of growing */
+}
+
+.listing .panel-header { margin-bottom: 4px; }
+
+.result-count {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.list-note {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.parking-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;  /* scroll inside the panel */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 2px;
+}
+
+.list-message {
+  padding: 24px 8px;
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.parking-card {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.parking-card:hover {
+  border-color: var(--teal);
+}
+
+.parking-card.is-selected {
+  border-color: var(--teal);
+  box-shadow: inset 4px 0 0 var(--teal); /* teal stripe on the left */
+  background: var(--teal-light);
+}
+
+.parking-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.parking-name {
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.parking-area {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 2px 0 6px;
+}
+
+.parking-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  margin-top: 4px;
+}
+
+.saved-mark {
+  color: #b91c1c;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Occupancy bar: script.js sets --fill (e.g. 70%), CSS draws the width */
+.occupancy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.occupancy-bar {
+  flex: 1;
+  height: 6px;
+  background: #e3e7ed;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.occupancy-bar span {
+  display: block;
+  height: 100%;
+  width: var(--fill, 0%);
+  background: var(--green);
+}
+
+.occupancy-limited .occupancy-bar span { background: var(--orange); }
+.occupancy-full    .occupancy-bar span { background: var(--red); }
+
+.occupancy-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+
+/* =============================================================
+   10. MAP, MARKERS AND POPUPS
+   Leaflet needs the map box to have a real height.
+   ============================================================= */
+.map-card {
+  position: relative;  /* legend and status are placed inside it */
+  padding: 0;
+  overflow: hidden;
+}
+
+.map {
+  height: 100%;
+  background: #e5e9ef;
+}
+
+.map-placeholder {
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.leaflet-container { font-family: var(--font); }
+
+/* Legend in the bottom-left corner of the map */
+.map-legend {
+  position: absolute;
+  left: 10px;
+  bottom: 22px;
+  z-index: 1000; /* above the map layers */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  max-width: calc(100% - 20px);
+  padding: 6px 10px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.78rem;
+}
+
+.map-legend > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-hint { color: var(--muted); }
+
+/* "Loading map…" / error message at the top of the map */
+.map-status {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  max-width: calc(100% - 120px);
+  padding: 6px 12px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.map-status.is-error {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: #b91c1c;
+}
+
+/* Parking markers (made with L.divIcon in map.js).
+   The number inside is the number of free slots. */
+.map-marker-wrapper,
+.user-marker-wrapper {
+  background: none;
+  border: none;
+}
+
+.map-marker {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--white);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--white);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.marker-available { background: var(--green); }
+.marker-limited   { background: var(--orange); color: #1c1300; } /* dark text on orange is easier to read */
+.marker-full      { background: var(--red); }
+
+/* Selected marker: navy ring and slightly bigger */
+.map-marker.is-selected {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 3px var(--navy);
+}
+
+/* The user's position (blue) or the demo reference point (grey) */
+.user-marker {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid var(--white);
+  background: var(--blue);
+  box-shadow: 0 0 0 2px var(--blue);
+}
+
+.user-marker.is-demo {
+  background: #6b7280;
+  box-shadow: 0 0 0 2px #6b7280;
+}
+
+/* Popups */
+.leaflet-popup-content-wrapper { border-radius: var(--radius); }
+.leaflet-popup-content { margin: 10px 12px; }
+
+/* Two class names = more specific than Leaflet's ".leaflet-popup-content p" */
+.leaflet-popup-content .map-popup-title {
+  margin: 0 0 2px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.leaflet-popup-content .map-popup-row {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+}
+
+
+/* =============================================================
+   11. SELECTED PARKING PANEL
+   ============================================================= */
+.info-panel {
+  overflow-y: auto;   /* scroll inside the panel if the content is long */
+}
+
+.info-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--teal-dark);
+  margin-bottom: 6px;
+}
+
+.info-empty {
+  padding: 16px 0;
+  color: var(--muted);
+}
+
+.info-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.info-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--navy);
+}
+
+.info-address {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 2px 0 10px;
+}
+
+/* Label/value pairs in a 2-column grid */
+.info-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 12px;
+  margin: 12px 0;
+}
+
+.info-details dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.info-details dd {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.info-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.tag {
+  padding: 2px 8px;
+  background: var(--navy-light);
+  border-radius: 3px;
+  font-size: 0.78rem;
+}
+
+.info-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.info-actions .btn { flex: 1; }
+
+.save-btn.is-saved {
+  border-color: #b91c1c;
+  color: #b91c1c;
+  background: var(--red-bg);
+}
+
+.info-note {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+
+/* =============================================================
+   12. FOOTER AND TOAST MESSAGE
+   ============================================================= */
+.footer {
+  background: var(--navy);
+  color: #d3dcea;
+  font-size: 0.88rem;
+  padding-top: 28px;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 24px;
+  padding-bottom: 20px;
+}
+
+.footer-heading {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+
+.footer-list li { margin-bottom: 4px; }
+
+.footer a { color: var(--white); }
+
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.8rem;
+}
+
+/* Short feedback message at the bottom of the screen */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 3000;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 10px 16px;
+  background: var(--navy);
+  color: var(--white);
+  border-radius: 4px;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.toast.is-error { background: #b91c1c; }
+
+
+/* =============================================================
+   13. RESPONSIVE DESIGN
+   ============================================================= */
+
+/* ---- Below 1200px: details panel moves under the list and map ---- */
+@media (max-width: 1199px) {
+  .dashboard-grid {
+    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-rows: 560px auto;
+  }
+
+  .info-panel {
+    grid-column: 1 / -1;   /* span both columns */
+  }
+
+  .info-details {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .info-actions .btn { flex: 0 1 auto; }
+}
+
+/* ---- Below 960px: "Menu" button instead of the links ---- */
+@media (max-width: 959px) {
+  .nav-toggle { display: block; }
+
+  /* The menu is hidden until script.js adds "is-open".
+     It takes the full width under the logo row, so it pushes
+     the page down instead of covering the hero. */
+  .nav-menu {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 4px 0 12px;
+  }
+
+  .nav-menu.is-open { display: flex; }
+
+  .nav-links { flex-direction: column; }
+
+  .nav-link { padding: 10px 8px; }
+
+  .stats { grid-template-columns: repeat(2, 1fr); }
+
+  .dashboard-grid {
+    grid-template-columns: 260px minmax(0, 1fr);
+    grid-template-rows: 520px auto;
+  }
+
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .footer-grid > div:first-child { grid-column: 1 / -1; }
+}
+
+/* ---- Below 768px (phones): one column, map first ---- */
+@media (max-width: 767px) {
+  .hero { padding: 20px 0; }
+  .hero-title { font-size: 1.35rem; }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+  }
+
+  /* order: map, then details, then the list */
+  .map-card   { order: 1; height: 360px; }
+  .info-panel { order: 2; overflow: visible; }
+  .listing    { order: 3; }
+
+  .parking-list {
+    flex: none;
+    max-height: 480px;
+  }
+
+  /* Bigger touch targets (about 40px) */
+  .btn            { padding: 10px 16px; }
+  .btn-sm         { padding: 8px 12px; }
+  .check          { min-height: 40px; }
+  .segmented span { padding: 9px 16px; }
+  .link-btn       { padding: 10px 0; }
+  .select         { padding: 9px 8px; }
+
+  .demo-bar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .footer-grid { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ===== Basic page settings ===== -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ParkFinder - a student project for finding parking in Coimbatore on an interactive map. Parking data is simulated.">
+  <title>ParkFinder | Smart City Parking Finder</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/logo.svg">
+
+  <!-- Leaflet stylesheet from Leaflet's official CDN (unpkg).
+       Needed so map tiles, markers, popups and zoom buttons display correctly. -->
+  <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin="">
+
+  <!-- Our stylesheet. Loaded last so it can override Leaflet's styles. -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- =====================================================
+       1. NAVIGATION BAR
+       On small screens the links are hidden behind the "Menu"
+       button. When opened, the menu is part of the header and
+       pushes the page down (it does not cover the content).
+       ===================================================== -->
+  <header class="navbar">
+    <nav class="container navbar-inner" aria-label="Main navigation">
+
+      <a href="#top" class="logo">
+        <img src="assets/icons/logo.svg" alt="" class="logo-mark" width="28" height="28">
+        <span class="logo-text">Park<span class="logo-accent">Finder</span></span>
+      </a>
+
+      <button class="nav-toggle" id="nav-toggle" type="button"
+              aria-expanded="false" aria-controls="nav-menu">
+        Menu
+      </button>
+
+      <div class="nav-menu" id="nav-menu">
+        <ul class="nav-links">
+          <li><a href="#overview" class="nav-link">Overview</a></li>
+          <li><a href="#locations" class="nav-link">Find Parking</a></li>
+          <li><a href="#map-area" class="nav-link">Live Map</a></li>
+          <li><a href="#about" class="nav-link">About</a></li>
+        </ul>
+        <!-- Asks for the user's location only when clicked (never on page load) -->
+        <button type="button" class="btn btn-accent" id="locate-btn">
+          <span id="locate-label">Near me</span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <main id="top">
+
+    <!-- =====================================================
+         2. HERO: heading, short description, search
+         ===================================================== -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="container">
+        <h1 class="hero-title" id="hero-title">Find a parking spot in Coimbatore</h1>
+        <p class="hero-text">
+          Search parking locations by name, area or road, compare free slots and prices
+          on the map, and get directions. All parking data in this student project is simulated.
+        </p>
+
+        <form class="search-bar" id="search-form" role="search">
+          <label for="search-input" class="visually-hidden">Search parking by name, area or road</label>
+          <input type="search" id="search-input" class="search-input"
+                 placeholder="e.g. Gandhipuram or RS Puram" autocomplete="off">
+          <button type="submit" class="btn btn-accent">Search</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         3. STATISTICS
+         The "–" values are placeholders. script.js calculates
+         the numbers from PARKING_SPOTS (data.js) and updates
+         them after every simulated availability change.
+         ===================================================== -->
+    <section class="stats container" id="overview" aria-label="Parking overview">
+      <div class="stat">
+        <p class="stat-label">Parking locations</p>
+        <p class="stat-value" id="stat-total">&ndash;</p>
+        <p class="stat-note" id="stat-capacity-note">Total capacity</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">Available slots</p>
+        <p class="stat-value stat-available" id="stat-available">&ndash;</p>
+        <p class="stat-note" id="stat-available-note">Free now</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">Occupied slots</p>
+        <p class="stat-value stat-occupied" id="stat-occupied">&ndash;</p>
+        <p class="stat-note" id="stat-occupied-note">Occupancy</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">Average price</p>
+        <p class="stat-value" id="stat-price">&ndash;</p>
+        <p class="stat-note">Per hour, all locations</p>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         4. FIND PARKING: demo notice, filters, list, map, details
+         ===================================================== -->
+    <section class="dashboard container" id="locations" aria-label="Find parking">
+
+      <!-- Demo notice: the availability numbers are simulated -->
+      <div class="demo-bar" role="note">
+        <p class="demo-bar-text">
+          <strong>Demo data:</strong> slot availability is simulated in the browser and changes every few seconds.
+          It does not come from real parking sensors.
+        </p>
+        <div class="demo-bar-actions">
+          <span class="demo-bar-time" id="sim-last-update">Waiting for first update&hellip;</span>
+          <button type="button" class="btn btn-outline btn-sm" id="sim-toggle">Pause updates</button>
+        </div>
+      </div>
+
+      <!-- ----- Filters ----- -->
+      <section class="panel filters" aria-labelledby="filters-title">
+        <div class="panel-header">
+          <h2 class="panel-title" id="filters-title">Filters</h2>
+          <button type="button" class="link-btn" id="reset-filters">Reset filters</button>
+        </div>
+
+        <form class="filter-form" id="filter-form">
+          <fieldset class="filter-group">
+            <legend class="filter-label">Availability</legend>
+            <div class="check-row">
+              <label class="check">
+                <input type="checkbox" name="status" value="available" checked>
+                <span class="dot dot-available" aria-hidden="true"></span> Available
+              </label>
+              <label class="check">
+                <input type="checkbox" name="status" value="limited" checked>
+                <span class="dot dot-limited" aria-hidden="true"></span> Filling fast
+              </label>
+              <label class="check">
+                <input type="checkbox" name="status" value="full" checked>
+                <span class="dot dot-full" aria-hidden="true"></span> Full
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="filter-group">
+            <legend class="filter-label">Vehicle type</legend>
+            <div class="segmented">
+              <label><input type="radio" name="vehicle" value="all" checked><span>All</span></label>
+              <label><input type="radio" name="vehicle" value="car"><span>Car</span></label>
+              <label><input type="radio" name="vehicle" value="bike"><span>Bike</span></label>
+            </div>
+          </fieldset>
+
+          <div class="filter-group">
+            <label for="price-range" class="filter-label">
+              Max price: <output id="price-output" for="price-range">&#8377;100/hr</output>
+            </label>
+            <input type="range" id="price-range" name="maxPrice" min="0" max="100" step="5" value="100">
+          </div>
+
+          <div class="filter-group">
+            <label for="sort-select" class="filter-label">Sort by</label>
+            <select id="sort-select" name="sort" class="select">
+              <option value="distance">Nearest first</option>
+              <option value="price">Cheapest first</option>
+              <option value="available">Most available first</option>
+            </select>
+          </div>
+
+          <fieldset class="filter-group">
+            <legend class="filter-label">Favourites</legend>
+            <label class="check">
+              <input type="checkbox" name="savedOnly" id="saved-only">
+              <span>Show saved only (<span id="saved-count">0</span>)</span>
+            </label>
+          </fieldset>
+        </form>
+      </section>
+
+      <!-- ----- List | Map | Details ----- -->
+      <div class="dashboard-grid">
+
+        <!-- Parking list: cards are built by script.js from data.js -->
+        <section class="panel listing" aria-labelledby="listing-title">
+          <div class="panel-header">
+            <h2 class="panel-title" id="listing-title">Parking locations</h2>
+            <!-- aria-live: screen readers announce the new count when it changes -->
+            <span class="result-count" id="result-count" aria-live="polite">&ndash; results</span>
+          </div>
+          <p class="list-note" id="distance-basis">Distances from Town Hall, Coimbatore (demo reference point)</p>
+          <ul class="parking-list" id="parking-list">
+            <li class="list-message">Loading parking locations&hellip;</li>
+          </ul>
+        </section>
+
+        <!-- Map: map.js tells Leaflet to draw inside #map -->
+        <section class="panel map-card" id="map-area" aria-label="Parking map">
+          <div id="map" class="map">
+            <p class="map-placeholder">Loading map&hellip;</p>
+          </div>
+
+          <!-- Loading / error message for map tiles (controlled by map.js) -->
+          <p class="map-status" id="map-status" role="status" hidden></p>
+
+          <div class="map-legend" aria-label="Map legend">
+            <span><span class="dot dot-available"></span> Available</span>
+            <span><span class="dot dot-limited"></span> Filling fast</span>
+            <span><span class="dot dot-full"></span> Full</span>
+            <span id="legend-user" hidden><span class="dot dot-user" id="legend-user-dot"></span> <span id="legend-user-label">You</span></span>
+            <span class="legend-hint">Number = free slots</span>
+          </div>
+        </section>
+
+        <!-- Selected parking details (filled by renderInfoPanel in script.js) -->
+        <aside class="panel info-panel" id="info-panel" aria-labelledby="info-title">
+          <p class="info-eyebrow">Selected parking</p>
+
+          <p class="info-empty" id="info-empty" hidden>
+            No parking location selected. Try a different search or reset the filters.
+          </p>
+
+          <div id="info-content">
+            <div class="info-heading">
+              <h2 class="info-title" id="info-title">&ndash;</h2>
+              <span class="badge" id="info-badge">&ndash;</span>
+            </div>
+            <p class="info-address" id="info-address"></p>
+
+            <div class="occupancy" id="info-occupancy" style="--fill: 0%">
+              <div class="occupancy-bar"><span></span></div>
+            </div>
+
+            <!-- <dl> = description list: pairs of a term (dt) and its value (dd) -->
+            <dl class="info-details">
+              <div><dt>Available</dt><dd id="info-available">&ndash;</dd></div>
+              <div><dt>Occupied</dt><dd id="info-occupied">&ndash;</dd></div>
+              <div><dt>Total capacity</dt><dd id="info-capacity">&ndash;</dd></div>
+              <div><dt>Price</dt><dd id="info-price">&ndash;</dd></div>
+              <div><dt>Opening hours</dt><dd id="info-hours">&ndash;</dd></div>
+              <div><dt>Distance</dt><dd id="info-distance">&ndash;</dd></div>
+              <div><dt>Vehicles</dt><dd id="info-vehicles">&ndash;</dd></div>
+            </dl>
+
+            <p class="info-label">Facilities</p>
+            <ul class="tag-list" id="info-facilities" aria-label="Facilities"></ul>
+
+            <div class="info-actions">
+              <!-- A link styled as a button. script.js sets its href to a Google Maps
+                   directions URL. rel="noopener noreferrer": the new tab can't control this page -->
+              <a class="btn btn-primary" id="directions-link" href="#" target="_blank" rel="noopener noreferrer">
+                Get directions
+              </a>
+              <!-- aria-pressed tells screen readers whether this spot is saved -->
+              <button type="button" class="btn btn-outline save-btn" id="save-btn" aria-pressed="false">
+                <span id="save-label">Save to favourites</span>
+              </button>
+            </div>
+            <p class="info-note">Directions open in Google Maps in a new tab.</p>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- =====================================================
+       5. FOOTER / ABOUT
+       ===================================================== -->
+  <footer class="footer" id="about">
+    <div class="container footer-grid">
+      <div>
+        <h2 class="footer-heading">About ParkFinder</h2>
+        <p>
+          ParkFinder is a Web Technology micro-project. It shows 12 example parking locations in
+          Coimbatore with search, filters, an interactive map, "Near me" and favourites.
+          The parking records and their availability are simulated for demonstration and are
+          not real parking information.
+        </p>
+      </div>
+      <div>
+        <h2 class="footer-heading">Team</h2>
+        <ul class="footer-list">
+          <li>DANIEL S (URK26CS1083)</li>
+          <li>GLADYS JOYSELIN W (URK26CS1063)</li>
+          <li>MONICA S (URK26CS1068)</li>
+          <li>SARAVNA M (URK26CS1090)</li>
+        </ul>
+      </div>
+      <div>
+        <h2 class="footer-heading">Built with</h2>
+        <ul class="footer-list">
+          <li>HTML5, CSS3, JavaScript (ES6)</li>
+          <li><a href="https://leafletjs.com" target="_blank" rel="noopener noreferrer">Leaflet.js</a> and
+              <a href="https://www.openstreetmap.org" target="_blank" rel="noopener noreferrer">OpenStreetMap</a></li>
+          <li>Browser LocalStorage (favourites)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; 2026 ParkFinder student project.</p>
+      <p>Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors</p>
+    </div>
+  </footer>
+
+  <!-- Short feedback messages ("Saved", "Location denied", ...).
+       role="status" + aria-live: screen readers read the message aloud. -->
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- =====================================================
+       SCRIPTS - order matters: later files use earlier ones.
+       "defer" = run after the HTML has finished loading.
+       ===================================================== -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin="" defer></script>
+  <script src="js/data.js" defer></script>
+  <script src="js/map.js" defer></script>
+  <script src="js/script.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Navy rounded square -->
+  <rect width="32" height="32" rx="8" fill="#0b1f3a"/>
+  <!-- White letter "P" drawn with a line -->
+  <path d="M11 24V8h6.5a5 5 0 0 1 0 10H11" fill="none" stroke="#ffffff" stroke-width="3.2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Teal dot = "available spot" -->
+  <circle cx="23.5" cy="23.5" r="3" fill="#14b8a6"/>
+</svg>
